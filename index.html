@@ -3,130 +3,86 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>repoa</title>
+  <title>repoa - Simple Player</title>
   <style>
     :root {
       --neon-blue: #00d2ff;
       --deep-blue: #4a7cff;
     }
 
-    html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #121212; }
-    body { font-family: 'Pretendard', sans-serif; color: #fff; display: flex; flex-direction: column; align-items: center; }
+    /* 전체 높이 고정 및 스크롤 방지 */
+    html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #121212; color: #fff; }
+    body { font-family: 'Pretendard', sans-serif; display: flex; flex-direction: column; align-items: center; }
 
-    .fixed-header { width: 100%; display: flex; flex-direction: column; align-items: center; background: #121212; z-index: 100; padding-bottom: 5px; flex-shrink: 0; }
-    .nav, .player-card, .playlist-wrapper { width: 92%; max-width: 360px; }
+    /* [해결 2] 상단 영역 고정: flex-shrink: 0와 z-index 설정 */
+    .fixed-header { 
+      width: 100%; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      background: #121212; 
+      z-index: 1000; 
+      padding-bottom: 15px; 
+      flex-shrink: 0; /* 헤더가 줄어들지 않도록 고정 */
+      border-bottom: 1px solid #222;
+    }
+
+    .nav, .player-card { width: 92%; max-width: 360px; }
 
     /* 네비게이션 */
     .nav { display: flex; gap: 4px; margin: 10px 0; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 50px; }
-    .nav button { flex: 1; border: none; background: none; color: rgba(255, 255, 255, 0.4); padding: 8px 0; border-radius: 25px; font-size: 11px; font-weight: bold; cursor: pointer; }
+    .nav button { flex: 1; border: none; background: none; color: rgba(255, 255, 255, 0.4); padding: 8px 0; border-radius: 25px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.3s; }
     .nav button.active { background: var(--deep-blue); color: #fff; box-shadow: 0 0 10px var(--deep-blue); }
 
-    /* 1. 플레이어 전체 외곽 (컴팩트하게) */
-.music-player-container {
-    width: 450px !important; /* 가로폭 조정 */
-    margin: 0 auto;
-    background: #121212; /* 배경색 */
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
+    /* [해결 1] 앨범 레이아웃: 기존 대비 2/3 사이즈로 조정 */
+    .album-zone { 
+      width: 100%; 
+      aspect-ratio: 16 / 9; /* 가로가 긴 시원한 비율 유지 */
+      margin: 10px 0; 
+      overflow: hidden; 
+      border-radius: 8px; 
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* 사진 픽셀에 상관없이 꽉 차게 고정 */
+    #albumArt { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: cover; /* 영역에 가득 채움 */
+    }
 
-/* 2. 상단 재생기 영역 (사진 제거 및 재배치) */
-.player-top-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
-}
+    /* 곡 정보 및 타임코드 (축소) */
+    .song-info { text-align: center; margin: 8px 0; }
+    .title { font-size: 15px; font-weight: 600; color: var(--neon-blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    
+    .status-row { display: flex; justify-content: center; margin-bottom: 5px; }
+    .time-display { font-size: 11px; color: #888; }
 
-/* 앨범 아트 영역 완전 삭제 */
-.album-art-wrapper, .album-art {
-    display: none !important;
-}
+    /* 재생 바 (슬림) */
+    .progress-container { width: 100%; height: 4px; background: #333; border-radius: 2px; cursor: pointer; margin-bottom: 15px; }
+    .progress-fill { height: 100%; background: var(--neon-blue); width: 0%; border-radius: 2px; }
 
-/* 3. 곡 정보 (제목 및 시간) */
-.song-info {
-    text-align: center;
-    margin-bottom: 15px;
-}
+    /* 컨트롤 버튼 (축소 및 정렬) */
+    .controls { display: flex; justify-content: center; align-items: center; gap: 30px; }
+    .btn-play-box { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+    .ctrl-btn { background: none; border: none; color: #aaa; font-size: 18px; cursor: pointer; }
 
-.song-title {
-    font-size: 17px !important;
-    font-weight: 600;
-    color: #ffffff;
-    margin-bottom: 8px;
-}
-
-.time-display {
-    font-size: 13px !important;
-    color: #b3b3b3;
-    letter-spacing: 1px;
-}
-
-/* 4. 재생 바 (슬림하게) */
-.progress-container {
-    width: 100%;
-    height: 4px !important;
-    background: #333;
-    border-radius: 2px;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.progress-bar {
-    height: 100%;
-    background: #1db954; /* 강조색 (원하시는 색으로 변경 가능) */
-    border-radius: 2px;
-    width: 0%;
-}
-
-/* 5. 컨트롤 버튼 (심플한 배치) */
-.controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 25px !important;
-    margin-bottom: 10px;
-}
-
-.play-pause-btn {
-    width: 50px !important;
-    height: 50px !important;
-    background: #1db954;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    cursor: pointer;
-}
-
-.prev-btn, .next-btn, .random-btn {
-    font-size: 18px !important;
-    color: #b3b3b3;
-    cursor: pointer;
-}
-
-/* 6. 하단 목록 영역 */
-.playlist-container {
-    border-top: 1px solid #333;
-    padding-top: 15px;
-    max-height: 250px;
-    overflow-y: auto;
-}
-
-.playlist-item {
-    padding: 10px;
-    font-size: 14px;
-    color: #ddd;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.playlist-item.active {
-    background: rgba(29, 185, 84, 0.1);
-    color: #1db954;
-}
+    /* [해결 2] 리스트 영역 스크롤 설정 */
+    .playlist-wrapper { 
+      width: 100%; 
+      flex-grow: 1; /* 남은 공간 모두 차지 */
+      overflow-y: auto; /* 리스트만 스크롤됨 */
+      background: #181818;
+    }
+    
+    .playlist-table { width: 100%; border-collapse: collapse; }
+    .playlist-table tr { border-bottom: 1px solid #222; cursor: pointer; }
+    .playlist-table td { padding: 12px 20px; font-size: 13px; color: #ccc; }
+    .playlist-table tr.active { background: rgba(0, 210, 255, 0.1); }
+    .playlist-table tr.active td { color: var(--neon-blue); font-weight: bold; }
   </style>
 </head>
 <body>
@@ -140,26 +96,28 @@
 
   <div class="player-card">
     <div class="album-zone">
-      <img id="albumArt" src="https://via.placeholder.com/150?text=Music" alt="Album Cover">
+      <img id="albumArt" src="https://via.placeholder.com/300x180?text=Select+Music" alt="Album Cover">
     </div>
 
-    <div class="song-info"><div class="title" id="labelTitle">곡을 선택해 주세요</div></div>
+    <div class="song-info">
+      <div class="title" id="labelTitle">곡을 선택해 주세요</div>
+    </div>
     
     <div class="status-row">
       <div class="time-display"><span id="curTime">00:00</span> / <span id="durTime">00:00</span></div>
     </div>
     
-    <div class="progress-container" id="progArea">
-      <div class="progress-bg"><div class="progress-fill" id="progFill"></div></div>
+    <div class="progress-container" id="progArea" onclick="seek(event)">
+      <div class="progress-fill" id="progFill"></div>
     </div>
     
     <audio id="player"></audio>
 
     <div class="controls">
-      <button style="background:none;border:none;color:#4b5563;font-size:18px;cursor:pointer;" onclick="prevSong()">⏮</button>
-      <div class="btn-play-box" onclick="togglePlay()"><span id="btnIcon" style="color:var(--neon-blue);font-size:22px;">▶</span></div>
-      <button style="background:none;border:none;color:#4b5563;font-size:18px;cursor:pointer;" onclick="nextSong()">⏭</button>
-      <button style="background:none;border:none;color:#4b5563;font-size:14px;cursor:pointer;" onclick="randomSong()">랜덤</button>
+      <button class="ctrl-btn" onclick="prevSong()">⏮</button>
+      <div class="btn-play-box" onclick="togglePlay()"><span id="btnIcon" style="color:var(--neon-blue);font-size:20px;">▶</span></div>
+      <button class="ctrl-btn" onclick="nextSong()">⏭</button>
+      <button class="ctrl-btn" style="font-size:12px;" onclick="randomSong()">랜덤</button>
     </div>
   </div>
 </div>
@@ -169,8 +127,9 @@
 </div>
 
 <script>
+// (기존 스크립트와 동일하게 사용하시되, 아래 seek 함수만 추가하여 재생바 클릭 이동을 지원합니다.)
 const user = "berosee";
-const repo = "repoa"; // 사용자님의 실제 저장소 이름으로 확인하세요.
+const repo = "repoa";
 let songs = [];
 let names = [];
 let index = 0;
@@ -178,25 +137,18 @@ let index = 0;
 const player = document.getElementById("player");
 const albumArt = document.getElementById("albumArt");
 
-// 카테고리 로드
 async function loadCategory(folder) {
     setActiveButton(folder);
-
-    // [핵심] 폴더별 커버 이미지 주소 업데이트
     const coverUrl = `https://cdn.jsdelivr.net/gh/${user}/${repo}@main/${folder}/cover.jpg`;
     albumArt.src = coverUrl;
-    // 이미지 로딩 실패 시 기본 이미지 처리
-    albumArt.onerror = () => { albumArt.src = "https://via.placeholder.com/150?text=No+Cover"; };
+    albumArt.onerror = () => { albumArt.src = "https://via.placeholder.com/300x180?text=No+Cover"; };
 
     const api = `https://api.github.com/repos/${user}/${repo}/contents/${folder}`;
     try {
         const res = await fetch(api);
         const data = await res.json();
-        
-        songs = [];
-        names = [];
+        songs = []; names = [];
         let html = '<table class="playlist-table" id="listTable">';
-
         data.forEach(file => {
             const fileName = file.name.toLowerCase();
             if(fileName.endsWith(".mp3") || fileName.endsWith(".flac")) {
@@ -208,15 +160,12 @@ async function loadCategory(folder) {
         });
         html += '</table>';
         document.getElementById("playlist").innerHTML = html;
-    } catch(e) {
-        console.error("데이터 로드 실패");
-    }
+    } catch(e) { console.error("Load failed"); }
 }
 
 function setActiveButton(folderId) {
     document.querySelectorAll('.nav button').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.getElementById(folderId);
-    if(activeBtn) activeBtn.classList.add('active');
+    document.getElementById(folderId).classList.add('active');
 }
 
 function play(i) {
@@ -236,20 +185,21 @@ function updateUI() {
     const rows = document.querySelectorAll("#listTable tr");
     rows.forEach((row, k) => {
         row.classList.toggle("active", k === index);
-        if (k === index) {
-            setTimeout(() => {
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-        }
+        if (k === index) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 }
 
-// 다음/이전/랜덤 곡
 function nextSong() { index = (index + 1) % songs.length; play(index); }
 function prevSong() { index = (index - 1 + songs.length) % songs.length; play(index); }
 function randomSong() { index = Math.floor(Math.random() * songs.length); play(index); }
 
-// 오디오 이벤트
+// 재생바 클릭 이동
+function seek(e) {
+    const rect = document.getElementById("progArea").getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    player.currentTime = pos * player.duration;
+}
+
 player.addEventListener("ended", nextSong);
 player.addEventListener("play", () => { document.getElementById("btnIcon").textContent = "Ⅱ"; });
 player.addEventListener("pause", () => { document.getElementById("btnIcon").textContent = "▶"; });
@@ -269,7 +219,6 @@ function formatTime(sec) {
     return m.toString().padStart(2, '0') + ":" + s.toString().padStart(2, '0');
 }
 
-// 초기 로드 (OLD 카테고리)
 loadCategory('old');
 </script>
 </body>
