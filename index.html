@@ -33,9 +33,45 @@
     .content-width { width: 92%; max-width: 420px; margin: 0 auto; }
 
     /* 네비게이션 버튼 */
-    .nav { display: flex; gap: 4px; margin: 10px 0; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 50px; }
-    .nav button { flex: 1; border: none; background: none; color: rgba(255, 255, 255, 0.4); padding: 8px 0; border-radius: 25px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    .nav button.active { background: var(--deep-blue); color: #fff; box-shadow: 0 0 10px var(--deep-blue); }
+    /* 앨범 플레이어용 콤팩트 버튼 디자인 */
+.nav { 
+    display: flex; 
+    gap: 8px; 
+    margin: 15px auto; 
+    background: rgba(255, 255, 255, 0.02); 
+    padding: 5px 15px; 
+    border-radius: 50px; 
+    width: fit-content; 
+    min-width: 220px;
+    justify-content: center; /* 중앙 정렬 보장 */
+}
+
+.nav button, .nav a { 
+    flex: none; 
+    width: 65px; 
+    border: none; 
+    background: #0a0a0a; 
+    color: #444; 
+    padding: 6px 0; 
+    border-radius: 20px; 
+    font-size: 10px; 
+    font-weight: 500; 
+    cursor: pointer; 
+    text-decoration: none; /* a 태그일 경우 대비 */
+    display: inline-block; /* 레이아웃 유지 */
+    text-align: center;
+    transition: all 0.4s ease;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* 활성화된 버튼 (파란 대비 강조) */
+.nav button.active, .nav a.active { 
+    background: #001a33 !important; /* 어두운 심해색 */
+    color: #00d2ff !important; /* 밝은 네온 블루 */
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.3); 
+    border: 1px solid #00d2ff; 
+    transform: translateY(-1px);
+}
 
     /* 앨범 사진 영역 (2/3 축소 및 고정) */
     .album-zone { 
